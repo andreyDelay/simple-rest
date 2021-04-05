@@ -24,8 +24,8 @@
     <db-password>root</db-password>
 
     <maven-compiler-plugin-version>3.8.1</maven-compiler-plugin-version>
-    <maven.compiler.source>1.5</maven.compiler.source>
-    <maven.compiler.target>1.5</maven.compiler.target>
+    <maven.compiler.source>15</maven.compiler.source>
+    <maven.compiler.target>15</maven.compiler.target>
     <release-version>15</release-version>
 
     <hibernate-core-version>5.4.27.Final</hibernate-core-version>
@@ -135,14 +135,14 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven-compiler-plugin-version}</version>
-          <configuration>
+<!--          <configuration>
             <source>${maven.compiler.source}</source>
             <target>${maven.compiler.target}</target>
             <release>${release-version}</release>
-<!--            <forceJavacCompilerUse>true</forceJavacCompilerUse>
+&lt;!&ndash;            <forceJavacCompilerUse>true</forceJavacCompilerUse>
             <fork>true</fork>
-            <compilerArgument>-proc:none</compilerArgument>-->
-          </configuration>
+            <compilerArgument>-proc:none</compilerArgument>&ndash;&gt;
+          </configuration>-->
         </plugin>
       </plugins>
 <!--    </pluginManagement>-->
