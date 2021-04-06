@@ -13,7 +13,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <tomcat7-plugin-version>2.2</tomcat7-plugin-version>
-    <maven.compiler.release>15</maven.compiler.release>
+<!--    <maven.compiler.release>15</maven.compiler.release>-->
 
     <mysql-connector-version>8.0.22</mysql-connector-version>
     <db-connection-URL>jdbc:mysql://localhost:3306/</db-connection-URL>
@@ -110,8 +110,8 @@
   </dependencies>
 
   <build>
-<!--    <finalName>simple-rest</finalName>
-    <pluginManagement>-->
+    <finalName>simple-rest</finalName>
+    <pluginManagement>
       <plugins>
         <plugin>
           <groupId>org.flywaydb</groupId>
@@ -165,6 +165,6 @@
           </configuration>
         </plugin>
       </plugins>
-<!--    </pluginManagement>-->
+    </pluginManagement>
   </build>
 </project>
