@@ -11,6 +11,7 @@ import java.io.IOException;
 public class DefaultServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.sendError(404, "Incorrect URL or Http method is not realized!");
+        resp.sendError(404, "Incorrect URL or Http method is not realized!\n" +
+                "source URL is: " + req.getRequestURI());
     }
 }

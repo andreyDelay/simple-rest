@@ -117,14 +117,18 @@ public class ServletUtils {
         return createdUser;
     }
 
-    public static HttpPost createPost(String event, Long userId) {
+    public static HttpPost createPost(HttpServletRequest request, String event, Long userId) {
         HttpPost post = null;
         try {
+            String server ="http://" + request.getServerName();
+            int port = request.getServerPort();
+            System.out.println(server + " | " + port);
             post =
                     new HttpPost(
-                            new URI("http://127.0.0.1:8080/rest/events?event_name=" + event +"&" +
+                            new URI(server + ":" + port + "/events?event_name=" + event +"&" +
                                     RequestIdentifierName.USER_ID.getKeyName()+"="
                                     + userId));
+            System.out.println(post.getURI());
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }

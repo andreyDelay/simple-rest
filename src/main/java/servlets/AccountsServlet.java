@@ -61,7 +61,7 @@ public class AccountsServlet extends HttpServlet {
         pw.flush();
         pw.close();
 
-        if (createdUser != null && (post = ServletUtils.createPost(event, createdUser.getId())) !=  null) {
+        if (createdUser != null && (post = ServletUtils.createPost(req, event, createdUser.getId())) !=  null) {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             httpClient.execute(post);
         }
@@ -99,7 +99,7 @@ public class AccountsServlet extends HttpServlet {
         pw.flush();
         pw.close();
 
-        if (updatedAccount != null && (post = ServletUtils.createPost(event, updatedAccount.getUser().getId())) != null) {
+        if (updatedAccount != null && (post = ServletUtils.createPost(req, event, updatedAccount.getUser().getId())) != null) {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             httpClient.execute(post);
         }

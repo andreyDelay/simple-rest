@@ -66,7 +66,7 @@ public class UsersServlet extends HttpServlet {
         pw.flush();
         pw.close();
 
-        if (createdUser != null && (post = ServletUtils.createPost(event, createdUser.getId())) !=  null) {
+        if (createdUser != null && (post = ServletUtils.createPost(req, event, createdUser.getId())) !=  null) {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             httpClient.execute(post);
         }
@@ -112,7 +112,7 @@ public class UsersServlet extends HttpServlet {
         pw.flush();
         pw.close();
 
-        if (updatedUser != null && (post = ServletUtils.createPost(event, updatedUser.getId())) != null) {
+        if (updatedUser != null && (post = ServletUtils.createPost(req, event, updatedUser.getId())) != null) {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             httpClient.execute(post);
         }

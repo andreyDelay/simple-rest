@@ -110,7 +110,9 @@ public class FilesServlet extends HttpServlet {
                         createdFile = fileServiceImpl.post(newFile);
                         if (createdFile != null) {
                             body = "File successfully uploaded!";
-                            event = "file%20" + fileItem.getName() + "%20was%20uploaded%20to%20server";
+                            event = "file%20" + fileItem.getName()
+                                                .replaceAll(" ", "%20") +
+                                                "%20was%20uploaded%20to%20server";
                             java.io.File file =
                                     new java.io.File(fileRepositoryPath +
                                             fileItem.getName());
@@ -139,7 +141,7 @@ public class FilesServlet extends HttpServlet {
         pw.flush();
         pw.close();
 
-        if (createdFile != null && (post = ServletUtils.createPost(event, createdFile.getFileUser().getId())) !=  null) {
+        if (createdFile != null && (post = ServletUtils.createPost(req, event, createdFile.getFileUser().getId())) !=  null) {
             CloseableHttpClient httpClient = HttpClients.createDefault();
             httpClient.execute(post);
         }
@@ -185,7 +187,7 @@ public class FilesServlet extends HttpServlet {
                     .replaceAll(" ", "%20") + "."
                     + updatedFile.getFileType()
                     + "%20was%20updated!";
-            post = ServletUtils.createPost(event, updatedFile.getFileUser().getId());
+            post = ServletUtils.createPost(req, event, updatedFile.getFileUser().getId());
             if (post != null) {
                 CloseableHttpClient httpClient = HttpClients.createDefault();
                 httpClient.execute(post);
@@ -227,7 +229,7 @@ public class FilesServlet extends HttpServlet {
 
         if (id != null && !body.contains("Error")) {
             Long userId = Long.parseLong(strUserId);
-            post = ServletUtils.createPost(event, userId);
+            post = ServletUtils.createPost(req, event, userId);
             CloseableHttpClient httpClient = HttpClients.createDefault();
             httpClient.execute(post);
         }
