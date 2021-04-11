@@ -10,9 +10,5 @@ nitifications:
     on_success: never
     on_failure: always
 
-addons:
-  apt:
-    packages:
-      - oracle-java15-installer
 before_install:
   - chmod +x mvnw
