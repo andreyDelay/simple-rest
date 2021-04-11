@@ -1,4 +1,4 @@
-use rest;
+/*use rest;*/
 
 CREATE TABLE IF NOT EXISTS users(
     user_id integer not null auto_increment,
@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS files(
     size bigint unsigned,
     user_id integer not null,
     file_status varchar(32),
+    file_path varchar(512) not null,
     CONSTRAINT fk_files_user_id FOREIGN KEY (user_id) REFERENCES users(user_id),
     primary key(file_id)
 ) engine = innoDB;

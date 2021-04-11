@@ -15,7 +15,8 @@ import javax.persistence.*;
                 @FieldResult(name = "fileType", column = "file_type"),
                 @FieldResult(name = "size", column = "size"),
                 @FieldResult(name = "status", column = "file_status"),
-                @FieldResult(name = "fileUser", column = "user_id")
+                @FieldResult(name = "fileUser", column = "user_id"),
+                @FieldResult(name = "filePath", column = "file_path")
         })
 },classes = {
         @ConstructorResult(
@@ -41,6 +42,9 @@ public class File {
 
     @Column(name = "size")
     private long size;
+
+    @Column(name = "file_path")
+    private String filePath;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "file_status")
@@ -106,4 +110,11 @@ public class File {
         ACTIVE,DELETED
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
 }

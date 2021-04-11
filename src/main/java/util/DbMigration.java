@@ -1,2 +1,5 @@
-package util;public class DbMigration {
+package util;
+
+public class DbMigration  {
+
 }

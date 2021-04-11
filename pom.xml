@@ -23,6 +23,12 @@
     <db-username>root</db-username>
     <db-password>root</db-password>
 
+    <heroku-db-host>jdbc:mysql://vkh7buea61avxg07.cbetxkdyhwsb.us-east-1.rds.amazonaws.com</heroku-db-host>
+    <heroku-db-port>:3306/</heroku-db-port>
+    <heroku-db-user>aes392h3wvvbpzwo</heroku-db-user>
+    <heroku-db-password>qx0kmy9nxrfp58e7</heroku-db-password>
+    <heroku-db-name>kndk0jkwflr7ekex</heroku-db-name>
+
     <maven-compiler-plugin-version>3.8.1</maven-compiler-plugin-version>
     <maven.compiler.source>15</maven.compiler.source>
     <maven.compiler.target>15</maven.compiler.target>
@@ -96,11 +102,6 @@
         </exclusion>
       </exclusions>
     </dependency>
-<!--    <dependency>
-      <groupId>com.heroku</groupId>
-      <artifactId>webapp-runner</artifactId>
-      <version>${webapp-runner-version}</version>
-    </dependency>-->
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
@@ -110,16 +111,15 @@
 
   <build>
     <finalName>simple-rest</finalName>
-<!--    <pluginManagement>-->
       <plugins>
         <plugin>
           <groupId>org.flywaydb</groupId>
           <artifactId>flyway-maven-plugin</artifactId>
           <version>${flyway-maven-plugin-version}</version>
           <configuration>
-            <url>${db-connection-URL}${db-name}${connection-parameters}</url>
-            <user>${db-username}</user>
-            <password>${db-password}</password>
+            <url>${heroku-db-host}${heroku-db-port}${heroku-db-name}</url>
+            <user>${heroku-db-user}</user>
+            <password>${heroku-db-password}</password>
           </configuration>
         </plugin>
         <plugin>
@@ -138,18 +138,6 @@
                     <artifactId>webapp-runner</artifactId>
                     <version>${webapp-runner-version}</version>
                     <destFileName>webapp-runner.jar</destFileName>
-                  </artifactItem>
-                  <artifactItem>
-                    <groupId>org.flywaydb</groupId>
-                    <artifactId>flyway-core</artifactId>
-                    <version>${flyway-core-version}</version>
-                    <destFileName>flyway.jar</destFileName>
-                  </artifactItem>
-                  <artifactItem>
-                    <groupId>mysql</groupId>
-                    <artifactId>mysql-connector-java</artifactId>
-                    <version>${mysql-connector-version}</version>
-                    <destFileName>mySql.jar</destFileName>
                   </artifactItem>
                 </artifactItems>
               </configuration>
@@ -181,6 +169,5 @@
           </configuration>
         </plugin>
       </plugins>
-<!--    </pluginManagement>-->
   </build>
 </project>

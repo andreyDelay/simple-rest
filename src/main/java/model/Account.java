@@ -23,7 +23,7 @@ public class Account {
     private AccountStatus status;
 
     @JsonIgnore
-    @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true, cascade = CascadeType.REMOVE)
+    @OneToOne(fetch = FetchType.EAGER, orphanRemoval = true, cascade = CascadeType.REMOVE)
     @JoinColumn(name = "user_id", referencedColumnName = "user_id", nullable = false)
 /*    @PrimaryKeyJoinColumn(name = "user_id")*/ //Инициирует доп запрос к users,
     private User user;
