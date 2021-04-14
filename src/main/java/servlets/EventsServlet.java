@@ -4,7 +4,7 @@ import model.Event;
 import model.User;
 import service.impl.EventServiceImpl;
 import service.impl.UserServiceImpl;
-import util.RequestIdentifierName;
+import util.IdentifierName;
 import util.ServletUtils;
 
 import javax.servlet.ServletConfig;
@@ -27,12 +27,12 @@ public class EventsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (ServletUtils.isIdSpecified(req, RequestIdentifierName.USER_ID)) {
+        if (ServletUtils.isIdSpecified(req, IdentifierName.USER_ID)) {
             getResultForSpecifiedParent(req);
         } else if (req.getAttribute("parent") != null) {
             UserServiceImpl userService = new UserServiceImpl();
-            if (ServletUtils.isIdSpecified(req, RequestIdentifierName.EVENT_ID)) {
-                Long eventId = ServletUtils.getSpecifiedID(req, RequestIdentifierName.EVENT_ID);
+            if (ServletUtils.isIdSpecified(req, IdentifierName.EVENT_ID)) {
+                Long eventId = ServletUtils.getSpecifiedID(req, IdentifierName.EVENT_ID);
                 resultList.addAll(userService.getUsersWithConcreteEvent(eventId));
             } else {
                 resultList.addAll(userService.getUsersWithEvents());
@@ -46,9 +46,9 @@ public class EventsServlet extends HttpServlet {
     }
 
     private void getResultForSpecifiedParent(HttpServletRequest request) {
-        Long userId = ServletUtils.getSpecifiedID(request, RequestIdentifierName.USER_ID);
-        if (ServletUtils.isIdSpecified(request, RequestIdentifierName.EVENT_ID)) {
-            Long eventId = ServletUtils.getSpecifiedID(request, RequestIdentifierName.EVENT_ID);
+        Long userId = ServletUtils.getSpecifiedID(request, IdentifierName.USER_ID);
+        if (ServletUtils.isIdSpecified(request, IdentifierName.EVENT_ID)) {
+            Long eventId = ServletUtils.getSpecifiedID(request, IdentifierName.EVENT_ID);
             resultList.add(eventServiceImpl.getConcreteEventByUserId(eventId, userId));
         } else {
             resultList.addAll(eventServiceImpl.getAllEventsByUserId(userId));
@@ -57,15 +57,14 @@ public class EventsServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String eventName = req.getParameter("event_name");
-        String userId = req.getParameter(RequestIdentifierName.USER_ID.getKeyName());
+        String eventText = req.getHeader("event");
+        String userId = req.getParameter(IdentifierName.USER_ID.getKeyName());
         Event createdEvent = null;
-        resp.setContentType("text/html");
         String body;
-        PrintWriter pw = resp.getWriter();
-        if (eventName != null) {
+
+        if (eventText != null && ServletUtils.isIdentifierValid(userId)) {
             Event event = new Event();
-            event.setName(eventName);
+            event.setName(eventText);
             event.setEventDate(new Date(System.currentTimeMillis()));
             User user = new User();
             user.setId(Long.parseLong(userId));
@@ -78,55 +77,47 @@ public class EventsServlet extends HttpServlet {
         } else {
             body = "Error during saving the event!";
         }
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Persistence report</title></head>" +
-                "<body>" + body + "</body>");
+
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(body));
         pw.flush();
         pw.close();
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String eventId = req.getParameter(RequestIdentifierName.EVENT_ID.getKeyName());
-        String userId = req.getParameter(RequestIdentifierName.USER_ID.getKeyName());
+        String eventId = req.getParameter(IdentifierName.EVENT_ID.getKeyName());
+        String userId = req.getParameter(IdentifierName.USER_ID.getKeyName());
         Event updatedEvent;
-        resp.setContentType("text/html");
-        String body = "";
-        PrintWriter pw = resp.getWriter();
+        String body;
 
-        if (eventId != null && userId != null) {
+        if (ServletUtils.isChildAndUserIdValid(eventId, userId)) {
             Event oldValue = eventServiceImpl.get(Long.parseLong(eventId));
-            String newEventName = req.getParameter("event_name");
-            if (newEventName != null) {
-                oldValue.setName(newEventName);
-                oldValue.setEventDate(new Date(System.currentTimeMillis()));
+            updatedEvent = updateEvent(req, oldValue, userId);
+            if (updatedEvent != null) {
+                body = "event was successfully updated!";
+            } else {
+                body = "Error, event's parameters didn't change!";
             }
-            User user = new UserServiceImpl().get(Long.parseLong(userId));
-            oldValue.setUser(user);
-            updatedEvent = eventServiceImpl.put(oldValue);
-            if (updatedEvent != null) body = "event was successfully updated!";
         } else {
             body = "Error! Event id and user id must be specified!";
         }
 
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Updating report</title></head>" +
-                "<body>" + body + "</body>");
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(body));
         pw.flush();
         pw.close();
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setContentType("text/html");
         String body;
-        PrintWriter pw = resp.getWriter();
-        String eventId = req.getParameter(RequestIdentifierName.EVENT_ID.getKeyName());
-        Long id;
-        if (eventId != null) {
-            id = Long.parseLong(eventId);
+        String eventId = req.getParameter(IdentifierName.EVENT_ID.getKeyName());
+        if (ServletUtils.isIdentifierValid(eventId)) {
             try {
-                eventServiceImpl.delete(id);
+                eventServiceImpl.delete(Long.parseLong(eventId));
                 body = "Event was successfully deleted!";
             } catch (Exception e) {
                 body = "Error! Cause: " + e.getMessage();
@@ -134,9 +125,10 @@ public class EventsServlet extends HttpServlet {
         } else {
             body = "Error! Event id must be specified!";
         }
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Deleting report</title></head>" +
-                "<body>" + body + "</body>");
+
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(body));
         pw.flush();
         pw.close();
     }
@@ -146,6 +138,20 @@ public class EventsServlet extends HttpServlet {
         eventServiceImpl = new EventServiceImpl();
         resultList = new ArrayList<>();
         super.init(config);
+    }
+
+    private Event updateEvent(HttpServletRequest request, Event event, String userId) {
+        if (event != null) {
+            String newEventName = request.getParameter("event_name");
+            if (newEventName != null) {
+                event.setName(newEventName);
+                event.setEventDate(new Date(System.currentTimeMillis()));
+            }
+            User user = new UserServiceImpl().get(Long.parseLong(userId));
+            event.setUser(user);
+            return eventServiceImpl.put(event);
+        }
+        return null;
     }
 
 }

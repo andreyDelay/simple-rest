@@ -107,7 +107,18 @@ public class File {
     }
 
     public enum FileStatus {
-        ACTIVE,DELETED
+        ACTIVE("ACTIVE"),
+        DELETED("DELETED");
+
+        private String statusValue;
+
+        FileStatus(String statusValue) {
+            this.statusValue = statusValue;
+        }
+
+        public String getStatusValue() {
+            return statusValue;
+        }
     }
 
     public String getFilePath() {

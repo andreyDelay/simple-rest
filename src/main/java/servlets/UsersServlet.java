@@ -5,7 +5,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import service.impl.UserServiceImpl;
-import util.RequestIdentifierName;
+import util.IdentifierName;
+import util.ServletEvents;
 import util.ServletUtils;
 
 import javax.servlet.ServletConfig;
@@ -33,8 +34,8 @@ public class UsersServlet extends HttpServlet {
             return;
         }
 
-        if (ServletUtils.isIdSpecified(req, RequestIdentifierName.USER_ID)) {
-            resultList.add(userServiceImpl.get(ServletUtils.getSpecifiedID(req, RequestIdentifierName.USER_ID)));
+        if (ServletUtils.isIdSpecified(req, IdentifierName.USER_ID)) {
+            resultList.add(userServiceImpl.get(ServletUtils.getSpecifiedID(req, IdentifierName.USER_ID)));
         } else {
             resultList.addAll(userServiceImpl.getAll());
         }
@@ -47,28 +48,22 @@ public class UsersServlet extends HttpServlet {
             goForward(req, resp);
             return;
         }
-        resp.setContentType("text/html");
-        String event = "user%20created";
-        String body;
-        HttpPost post;
-        PrintWriter pw = resp.getWriter();
-
+        ServletEvents event;
         User createdUser = ServletUtils.createAndSaveNewUser(req);
         if (createdUser != null) {
-            body = "Saved successfully!";
+            event = ServletEvents.ACCOUNT_CREATED;
         } else {
-            body = "Error during saving, check parameters!";
+            event = ServletEvents.ACCOUNT_USER_CREATION_ERROR;
         }
 
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Persistence report</title></head>" +
-                "<body>" + body + "</body>");
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(event.toString()));
         pw.flush();
         pw.close();
 
-        if (createdUser != null && (post = ServletUtils.createPost(req, event, createdUser.getId())) !=  null) {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            httpClient.execute(post);
+        if (event.equals(ServletEvents.ACCOUNT_CREATED)) {
+            postEvent(createdUser, req, event);
         }
     }
 
@@ -78,43 +73,30 @@ public class UsersServlet extends HttpServlet {
             goForward(req, resp);
             return;
         }
-        resp.setContentType("text/html");
-        String event = "user%20personal%20info%20updated";
-        String body;
-        HttpPost post;
+        ServletEvents event;
         User updatedUser = null;
-        PrintWriter pw = resp.getWriter();
 
-        String username = req.getParameter("username");
-        String surname = req.getParameter("surname");
-        String age = req.getParameter("age");
-        String id = req.getParameter(RequestIdentifierName.USER_ID.getKeyName());
-        if (id != null) {
-            User user = new User();
-            user.setId(Long.parseLong(id));
-            if (username != null) user.setName(username);
-            if (surname != null) user.setSurname(surname);
-            if (age != null) user.setAge(Integer.parseInt(age));
-            updatedUser = userServiceImpl.put(user);
-
-            if (updatedUser != null) {
-                body = "User updated successfully!";
+        String userId = req.getParameter(IdentifierName.USER_ID.getKeyName());
+        if (ServletUtils.isIdentifierValid(userId)) {
+            User oldUser = userServiceImpl.get(Long.parseLong(userId));
+            if (oldUser != null) {
+                updatedUser = updateUser(req, oldUser);
+                event = ServletEvents.USER_UPDATED;
             } else {
-                body = "Error during updating user!";
+                event = ServletEvents.ACCOUNT_NOT_FOUND;
             }
         } else {
-            body = "Error! User id must be specified!";
+            event = ServletEvents.ID_ERROR;
         }
 
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Updating report</title></head>" +
-                "<body>" + body + "</body>");
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(event.toString()));
         pw.flush();
         pw.close();
 
-        if (updatedUser != null && (post = ServletUtils.createPost(req, event, updatedUser.getId())) != null) {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            httpClient.execute(post);
+        if (event.equals(ServletEvents.USER_UPDATED)) {
+            postEvent(updatedUser, req, event);
         }
     }
 
@@ -124,24 +106,24 @@ public class UsersServlet extends HttpServlet {
             goForward(req, resp);
             return;
         }
-        resp.setContentType("text/html");
-        PrintWriter pw = resp.getWriter();
-        String body;
-        String userId = req.getParameter(RequestIdentifierName.USER_ID.getKeyName());
-        if (userId != null) {
-            Long id = Long.parseLong(userId);
+        ServletEvents event;
+        String errorText = "";
+        String userId = req.getParameter(IdentifierName.USER_ID.getKeyName());
+        if (ServletUtils.isIdentifierValid(userId)) {
             try {
-                userServiceImpl.delete(id);
-                body = "User was deleted successfully!";
+                userServiceImpl.delete(Long.parseLong(userId));
+                event = ServletEvents.ACCOUNT_DELETED;
             } catch (Exception e) {
-                body = "Error! Cause: " + e.getMessage();
+                event = ServletEvents.ACCOUNT_DELETE_ERROR;
+                errorText = e.getMessage();
             }
         } else {
-            body = "Error! User id must be specified!";
+            event = ServletEvents.ID_ERROR;
         }
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Deleting report</title></head>" +
-                "<body>" + body + "</body>");
+
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(event.toString() + errorText));
         pw.flush();
         pw.close();
     }
@@ -154,9 +136,38 @@ public class UsersServlet extends HttpServlet {
     }
 
     private void goForward(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String url = ServletUtils.getSubRequestUrl(req, RequestIdentifierName.USER_ID);
+        String url = ServletUtils.getSubRequestUrl(req, IdentifierName.USER_ID);
         req.setAttribute("parent","yes");
         req.getRequestDispatcher(url).forward(req, resp);
+    }
+
+    private void postEvent(User user, HttpServletRequest request,
+                           ServletEvents event) throws IOException {
+        if (user != null) {
+            String eventText = event.toString();
+            HttpPost post = ServletUtils.createPost(request, eventText, user.getId());
+            if (post != null) {
+                CloseableHttpClient httpClient = HttpClients.createDefault();
+                httpClient.execute(post);
+            }
+        }
+    }
+
+    private User updateUser(HttpServletRequest request, User user) {
+        String username = request.getParameter("username");
+        String surname = request.getParameter("surname");
+        String age = request.getParameter("age");
+
+        if (username != null) {
+            user.setName(username);
+        }
+        if (surname != null){
+            user.setSurname(surname);
+        }
+        if (age != null) {
+            user.setAge(Integer.parseInt(age));
+        }
+        return user;
     }
 
 }

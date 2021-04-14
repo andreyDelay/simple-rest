@@ -22,11 +22,11 @@ public class ServletUtils {
         return urlParametersName;
     }
 
-    public static boolean isIdSpecified(HttpServletRequest request, RequestIdentifierName endPoint) {
+    public static boolean isIdSpecified(HttpServletRequest request, IdentifierName endPoint) {
         return getMapWithIdentifiers(request).containsKey(endPoint.getKeyName());
     }
 
-    public static Long getSpecifiedID(HttpServletRequest request, RequestIdentifierName endPoint) {
+    public static Long getSpecifiedID(HttpServletRequest request, IdentifierName endPoint) {
         return getMapWithIdentifiers(request).get(endPoint.getKeyName());
 
     }
@@ -39,7 +39,7 @@ public class ServletUtils {
         return attributes;
     }
 
-    public static String getSubRequestUrl(HttpServletRequest request, RequestIdentifierName endPoint) {
+    public static String getSubRequestUrl(HttpServletRequest request, IdentifierName endPoint) {
         String url;
         if (isIdSpecified(request, endPoint)) {
             Long specifiedID = getSpecifiedID(request, endPoint);
@@ -122,16 +122,40 @@ public class ServletUtils {
         try {
             String server ="http://" + request.getServerName();
             int port = request.getServerPort();
-            System.out.println(server + " | " + port);
-            post =
-                    new HttpPost(
-                            new URI(server + ":" + port + "/events?event_name=" + event +"&" +
-                                    RequestIdentifierName.USER_ID.getKeyName()+"="
-                                    + userId));
-            System.out.println(post.getURI());
+            post = new HttpPost(new URI(server + ":" + port + "/events?user_id=" + userId));
+            post.setHeader("event", event);
         } catch (URISyntaxException e) {
-            e.printStackTrace();
+            //TODO write to a log that event should be posted, but something went wrong
         }
         return post;
     }
+
+    public static String getResponseContent(String body) {
+        StringBuilder builder = new StringBuilder("<!DOCTYPE html>");
+        builder.append("<html>\n" +
+                        "<head>" +
+                            "<title>Operation report</title>" +
+                        "</head>" +
+                "<body>" + body + "</body>");
+        return builder.toString();
+    }
+
+    public static boolean isIdentifierValid(String userId) {
+        return isChildAndUserIdValid("1", userId);
+    }
+
+    public static boolean isChildAndUserIdValid(String childId, String userId) {
+        boolean result = (childId != null && userId != null);
+        if (result) {
+            try {
+                Long.parseLong(childId);
+                Long.parseLong(userId);
+            } catch (IllegalArgumentException e) {
+                result = false;
+                //TODO how to inform in response that id(s) not correct
+            }
+        }
+        return result;
+    }
+
 }

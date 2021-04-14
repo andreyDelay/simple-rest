@@ -64,7 +64,18 @@ public class Account {
     }
 
     public enum AccountStatus {
-        ACTIVE,BANNED,DELETED
+        ACTIVE("ACTIVE"),
+        DELETED("DELETED");
+
+        private String statusValue;
+
+        AccountStatus(String statusValue) {
+            this.statusValue = statusValue;
+        }
+
+        public String getStatusValue() {
+            return statusValue;
+        }
     }
 
 }

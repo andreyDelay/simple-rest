@@ -6,7 +6,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import service.impl.AccountServiceImpl;
-import util.RequestIdentifierName;
+import util.IdentifierName;
+import util.ServletEvents;
 import util.ServletUtils;
 
 import javax.servlet.ServletConfig;
@@ -18,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @WebServlet(urlPatterns = "/accounts/*")
@@ -28,8 +30,8 @@ public class AccountsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (ServletUtils.isIdSpecified(req, RequestIdentifierName.ACCOUNT_ID)) {
-            resultList.add(accountServiceImpl.get(ServletUtils.getSpecifiedID(req, RequestIdentifierName.ACCOUNT_ID)));
+        if (ServletUtils.isIdSpecified(req, IdentifierName.ACCOUNT_ID)) {
+            resultList.add(accountServiceImpl.get(ServletUtils.getSpecifiedID(req, IdentifierName.ACCOUNT_ID)));
         } else {
             resultList.addAll(accountServiceImpl.getAll());
         }
@@ -38,93 +40,71 @@ public class AccountsServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setContentType("text/html");
-        String event = "user%20created";
-        String body;
-        HttpPost post;
-        PrintWriter pw = resp.getWriter();
-
+        ServletEvents event;
         User createdUser = ServletUtils.createAndSaveNewUser(req);
         if (createdUser != null) {
-            body = "Saved successfully!";
+            event = ServletEvents.ACCOUNT_CREATED;
         } else {
-            body = "Error during saving, check parameters!\n" +
-                    "Required parameters to create user:\n" +
-                    "1. login\n" +
-                    "2. username\n" +
-                    "3. surname\n" +
-                    "4. age";
+            event = ServletEvents.ACCOUNT_USER_CREATION_ERROR;
         }
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Persistence report</title></head>" +
-                "<body>" + body + "</body>");
+
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(event.toString()));
         pw.flush();
         pw.close();
 
-        if (createdUser != null && (post = ServletUtils.createPost(req, event, createdUser.getId())) !=  null) {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            httpClient.execute(post);
+        if (event.equals(ServletEvents.ACCOUNT_CREATED)) {
+            postEvent(createdUser.getAccount(), req, event);
         }
     }
 
     @Override
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setContentType("text/html");
-        String event = "account%20updated";
-        String body;
-        HttpPost post;
+        ServletEvents event;
         Account updatedAccount = null;
-        PrintWriter pw = resp.getWriter();
 
-        String login = req.getParameter("login");
-        String status = req.getParameter("status");
-        String id = req.getParameter(RequestIdentifierName.ACCOUNT_ID.getKeyName());
-        if (id != null) {
-            Account account = new Account();
-            account.setId(Long.parseLong(id));
-            if (status != null) account.setStatus(Account.AccountStatus.valueOf(status));
-            if (login != null) account.setAccountName(login);
-            updatedAccount = accountServiceImpl.put(account);
-        }
-
-        if (updatedAccount != null) {
-            body = "Account updated successfully!";
+        String accountId = req.getParameter(IdentifierName.ACCOUNT_ID.getKeyName());
+        if (ServletUtils.isIdentifierValid(accountId)) {
+            Account account = accountServiceImpl.get(Long.parseLong(accountId));
+            updatedAccount = accountServiceImpl.put(updateAccount(account, req));
+            event = updatedAccount == null ? ServletEvents.ACCOUNT_UPDATE_ERROR : ServletEvents.ACCOUNT_UPDATED;
         } else {
-            body = "Error during updating account!";
+            event = ServletEvents.ID_ERROR;
         }
 
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Updating report</title></head>" +
-                "<body>" + body + "</body>");
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(event.toString()));
         pw.flush();
         pw.close();
 
-        if (updatedAccount != null && (post = ServletUtils.createPost(req, event, updatedAccount.getUser().getId())) != null) {
-            CloseableHttpClient httpClient = HttpClients.createDefault();
-            httpClient.execute(post);
+        if (event.equals(ServletEvents.ACCOUNT_UPDATED)) {
+            postEvent(updatedAccount, req, event);
         }
     }
 
     @Override
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        resp.setContentType("text/html");
-        PrintWriter pw = resp.getWriter();
-        String body;
-        String userId = req.getParameter(RequestIdentifierName.ACCOUNT_ID.getKeyName());
-        if (userId != null) {
-            Long id = Long.parseLong(userId);
+        ServletEvents event;
+        String errorText = "";
+        String accountId = req.getParameter(IdentifierName.ACCOUNT_ID.getKeyName());
+        if (ServletUtils.isIdentifierValid(accountId)) {
+            Long id = Long.parseLong(accountId);
             try {
                 accountServiceImpl.delete(id);
-                body = "Account was deleted successfully!";
+                event = ServletEvents.ACCOUNT_DELETED;
             } catch (Exception e) {
-                body = "Error! Cause: " + e.getMessage();
+                event = ServletEvents.ACCOUNT_DELETE_ERROR;
+                errorText = e.getMessage();
             }
         } else {
-            body = "Error! Account id must be specified!";
+            event = ServletEvents.ID_ERROR;
         }
-        pw.println("<!DOCTYPE html>");
-        pw.println("<html>\n" + "<head><title>Deleting report</title></head>" +
-                "<body>" + body + "</body>");
+
+        PrintWriter pw = resp.getWriter();
+        resp.setContentType("text/html");
+        pw.println(ServletUtils.getResponseContent(event.toString() + errorText));
         pw.flush();
         pw.close();
     }
@@ -134,6 +114,40 @@ public class AccountsServlet extends HttpServlet {
         accountServiceImpl = new AccountServiceImpl();
         resultList = new ArrayList();
         super.init(config);
+    }
+
+    private Account updateAccount(Account account, HttpServletRequest request) {
+        String newLogin = request.getParameter("login");
+        String newStatus = request.getParameter("status");
+        if (newStatus != null) {
+            establishNewStatus(newStatus, account);
+        }
+        if (newLogin != null) {
+            account.setAccountName(newLogin);
+        }
+        return account;
+    }
+
+    private void establishNewStatus(String newStatus, Account account) {
+        boolean isNewStatusValid =
+                Arrays.stream(Account.AccountStatus.values())
+                        .map(Account.AccountStatus::getStatusValue)
+                        .anyMatch(status -> status.equals(newStatus));
+        if (isNewStatusValid) {
+            account.setStatus(Account.AccountStatus.valueOf(newStatus));
+        }
+    }
+
+    private void postEvent(Account account, HttpServletRequest request,
+                           ServletEvents event) throws IOException {
+        if (account != null) {
+            String eventText = event.toString();
+            HttpPost post = ServletUtils.createPost(request, eventText, account.getUser().getId());
+            if (post != null) {
+                CloseableHttpClient httpClient = HttpClients.createDefault();
+                httpClient.execute(post);
+            }
+        }
     }
 
 }

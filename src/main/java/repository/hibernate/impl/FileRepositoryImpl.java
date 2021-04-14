@@ -68,7 +68,7 @@ public class FileRepositoryImpl implements FileRepository {
         Session session = SessionUtils.getSession();
         session.beginTransaction();
         Query query = session.createNativeQuery("SELECT f.file_id, f.filename, f.file_type, f.size," +
-                              "f.file_status, f.user_id, u.name, u.surname " +
+                              "f.file_status, f.file_path, f.user_id, u.name, u.surname " +
                               "FROM files f INNER JOIN users u on f.user_id=? " +
                               "group by f.file_id;",
                         "getFilesByUserId");
@@ -89,7 +89,7 @@ public class FileRepositoryImpl implements FileRepository {
         Session session = SessionUtils.getSession();
         session.beginTransaction();
         Query query = session.createNativeQuery("SELECT f.file_id, f.filename, f.file_type, f.size," +
-                        "f.file_status, f.user_id, u.name, u.surname " +
+                        "f.file_status, f.file_path, f.user_id, u.name, u.surname " +
                         "FROM files f INNER JOIN users u on f.user_id=u.user_id WHERE f.file_id=? and u.user_id=?" +
                         " group by f.file_id;",
                 "getFilesByUserId");

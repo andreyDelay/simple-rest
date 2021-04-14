@@ -1,7 +1,7 @@
 package filters;
 
 import filters.urlconstants.URLPatterns;
-import util.RequestIdentifierName;
+import util.IdentifierName;
 import util.ServletUtils;
 
 import javax.servlet.ServletException;
@@ -94,8 +94,8 @@ public class AbstractFilter {
     }
 
     private Set<String> getEndPointsSet() {
-        return Arrays.stream(RequestIdentifierName.values())
-                .map(RequestIdentifierName::getKeyName)
+        return Arrays.stream(IdentifierName.values())
+                .map(IdentifierName::getKeyName)
                 .collect(Collectors.toSet());
     }
 

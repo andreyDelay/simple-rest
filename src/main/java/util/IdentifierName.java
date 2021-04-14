@@ -1,6 +1,6 @@
 package util;
 
-public enum RequestIdentifierName {
+public enum IdentifierName {
     USER_ID("user_id"),
     ACCOUNT_ID("account_id"),
     FILE_ID("file_id"),
@@ -8,7 +8,7 @@ public enum RequestIdentifierName {
 
     private String endPoint;
 
-    RequestIdentifierName(String endPoint) {
+    IdentifierName(String endPoint) {
         this.endPoint = endPoint;
     }
 
