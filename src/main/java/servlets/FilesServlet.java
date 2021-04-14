@@ -36,7 +36,7 @@ public class FilesServlet extends HttpServlet {
 
     private FileServiceImpl fileServiceImpl;
     private List resultList;
-    private final String fileRepositoryPath = "target/classes/upload/";
+    private final String fileRepositoryPath = "src/main/resources/upload/";
     static final int fileMaxSize = 100 * 1024;
     static final int memMaxSize = 100 * 1024;
 
