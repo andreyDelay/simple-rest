@@ -41,12 +41,13 @@ public class ServletUtils {
 
     public static String getSubRequestUrl(HttpServletRequest request, IdentifierName endPoint) {
         String url;
-        if (isIdSpecified(request, endPoint)) {
+/*        if (isIdSpecified(request, endPoint)) {
             Long specifiedID = getSpecifiedID(request, endPoint);
             url = request.getPathInfo().replaceAll("/" + specifiedID,"");
         } else {
             url = request.getPathInfo();
-        }
+        }*/
+        url = request.getPathInfo();
         return url;
     }
 

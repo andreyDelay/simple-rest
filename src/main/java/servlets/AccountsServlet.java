@@ -30,6 +30,7 @@ public class AccountsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resultList = new ArrayList();
         if (ServletUtils.isIdSpecified(req, IdentifierName.ACCOUNT_ID)) {
             resultList.add(accountServiceImpl.get(ServletUtils.getSpecifiedID(req, IdentifierName.ACCOUNT_ID)));
         } else {
@@ -112,7 +113,6 @@ public class AccountsServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         accountServiceImpl = new AccountServiceImpl();
-        resultList = new ArrayList();
         super.init(config);
     }
 

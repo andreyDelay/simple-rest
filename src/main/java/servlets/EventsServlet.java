@@ -27,6 +27,7 @@ public class EventsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resultList = new ArrayList();
         if (ServletUtils.isIdSpecified(req, IdentifierName.USER_ID)) {
             getResultForSpecifiedParent(req);
         } else if (req.getAttribute("parent") != null) {
@@ -136,7 +137,6 @@ public class EventsServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         eventServiceImpl = new EventServiceImpl();
-        resultList = new ArrayList<>();
         super.init(config);
     }
 

@@ -20,7 +20,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-@WebServlet(urlPatterns = "/users/*")
+@WebServlet(urlPatterns = "/users/*", loadOnStartup = 0)
 public class UsersServlet extends HttpServlet {
 
     private UserServiceImpl userServiceImpl;
@@ -28,6 +28,7 @@ public class UsersServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resultList = new ArrayList();
         if (ServletUtils.isUrlMatchToAnySubRequest(req.getRequestURI())) {
             req.setAttribute("parent","yes");
             goForward(req, resp);
@@ -131,7 +132,6 @@ public class UsersServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
         userServiceImpl = new UserServiceImpl();
-        resultList = new ArrayList<>();
         super.init(config);
     }
 
