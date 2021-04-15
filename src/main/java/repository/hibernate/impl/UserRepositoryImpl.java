@@ -57,7 +57,7 @@ public class UserRepositoryImpl implements UserRepository {
     public List<User> getUsersWithEvents() {
         Session session = SessionUtils.getSession();
         session.beginTransaction();
-        List users = session.createQuery("FROM User u LEFT JOIN FETCH u.events").list();
+        List users = session.createQuery("SELECT DISTINCT u FROM User u JOIN FETCH u.events").list();
         SessionUtils.commitAndClose(session);
         return users;
     }
@@ -66,7 +66,7 @@ public class UserRepositoryImpl implements UserRepository {
     public List<User> getUsersWithFiles() {
         Session session = SessionUtils.getSession();
         session.beginTransaction();
-        List users = session.createQuery("SELECT u FROM User u LEFT JOIN FETCH u.files").list();
+        List users = session.createQuery("SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.files").list();
         SessionUtils.commitAndClose(session);
         return users;
     }
